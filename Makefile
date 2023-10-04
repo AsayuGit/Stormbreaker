@@ -10,7 +10,7 @@ SRC := src/main.c \
 INCLUDE := -Iinclude
 
 CFLAGS := -Wall
-LIBS := -lcrypto
+LIBS := -lcrypto -lpthread
 
 all:
 	$(CC) -o $(PROJ) $(CFLAGS) $(SRC) $(INCLUDE) $(LIBS)

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "bruteforce.h"
@@ -7,10 +8,11 @@ int main(int argc, char** argv) {
     unsigned char targetDigest[32];
 
     hash(targetDigest, "hello36");
-    const char* pass = wordlistBF("rockyou.txt", targetDigest);
+    char* pass = wordlistBF("rockyou.txt", targetDigest);
     
     if (pass) {
         printf("Password is : %s\n", pass);
+        free(pass);
         return 0;
     }
 

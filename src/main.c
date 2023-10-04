@@ -7,7 +7,7 @@
 int main(int argc, char** argv) {
     unsigned char targetDigest[32];
 
-    hash(targetDigest, "hello36");
+    hash(targetDigest, "clarus");
     char* pass = wordlistBF("rockyou.txt", targetDigest);
     
     if (pass) {

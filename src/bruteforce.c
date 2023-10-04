@@ -8,14 +8,14 @@
 #include <stdbool.h>
 
 #include <pthread.h>
-
-#define THERAD_COUNT 2
+#include <sys/sysinfo.h>
 
 struct wordlistBFArgs {
     struct wordlist wordlist;
     unsigned char targetDigest[32];
     unsigned int threadIndex;
     unsigned int threadCount;
+    bool* passwordFound;
 };
 
 static void* bfThread(void* args) {
@@ -27,14 +27,16 @@ static void* bfThread(void* args) {
     unsigned int start = segmentLength * bfArgs->threadIndex;
     unsigned int end = start + segmentLength;
 
-    printf("%d %d %d\n", segmentLength, start, end);
+    if (bfArgs->threadIndex == bfArgs->threadCount - 1) {
+        end += (bfArgs->wordlist.length % bfArgs->threadCount);
+    }
 
-    // MMMmm..
+    printf("Thread %d scanning range %d %d from %ld\n", bfArgs->threadIndex, start, end, bfArgs->wordlist.length);
+
     char* buffer = NULL;
     bool passwordFound = false;
-    for (unsigned int wordIndex = start; !passwordFound && (wordIndex < end); ++wordIndex) {
+    for (unsigned int wordIndex = start; !passwordFound && !(*bfArgs->passwordFound) && (wordIndex < end); ++wordIndex) {
         buffer = bfArgs->wordlist.words[wordIndex];
-        printf("hash [%d] >%s<\n", bfArgs->threadIndex, buffer);
         hash(digest, buffer);
 
         passwordFound = true;
@@ -48,35 +50,48 @@ static void* bfThread(void* args) {
 
     char* returnPassword = NULL;
     if (passwordFound) {
+        printf("Thread %d found pass\n", bfArgs->threadIndex);
+        (*bfArgs->passwordFound) = true;
+
         size_t buffLen = strlen(buffer) + 1;
         returnPassword = (char*)malloc(buffLen * sizeof(char));
         memcpy(returnPassword, buffer, buffLen);
     }
 
-    freeWordlist(bfArgs->wordlist);
     free(args);
 
     return returnPassword;
 }
 
 char* wordlistBF(const char* wordlistPath, const unsigned char targetDigest[32]) {
-    pthread_t* threads = (pthread_t*)calloc(THERAD_COUNT, sizeof(pthread_t));
+    int nbOfThreads = get_nprocs();
+    pthread_t* threads = (pthread_t*)calloc(nbOfThreads, sizeof(pthread_t));
 
-    for (unsigned int threadIndex = 0; threadIndex < THERAD_COUNT; ++threadIndex) {
+    bool passwordFound = false;
+
+    struct wordlist wordlist = loadWordlist(wordlistPath);
+
+    for (unsigned int threadIndex = 0; threadIndex < nbOfThreads; ++threadIndex) {
         struct wordlistBFArgs* args = calloc(1, sizeof(struct wordlistBFArgs));
 
-        args->wordlist = loadWordlist(wordlistPath);
-        args->threadCount = THERAD_COUNT;
+        args->wordlist = wordlist;
+        args->threadCount = nbOfThreads;
         args->threadIndex = threadIndex;
+        args->passwordFound = &passwordFound; // Pass pointer to boolean to signal if threads found the password
 
         memcpy(args->targetDigest, targetDigest, 32);
+        printf("Starting thread %d\n", threadIndex);
         pthread_create(&threads[threadIndex], NULL, bfThread, args);
     }
 
-    char* password;
-    for (unsigned int threadIndex = 0; threadIndex < THERAD_COUNT; ++threadIndex) {
-        pthread_join(threads[threadIndex], (void**)&password);
+    char* password = NULL;
+    for (unsigned int threadIndex = 0; threadIndex < nbOfThreads; ++threadIndex) {
+        char* buffer = NULL;
+        pthread_join(threads[threadIndex], (void**)&buffer);
+        if (buffer) password = buffer;
     }
+
+    freeWordlist(wordlist);
 
     return password;
 }

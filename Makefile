@@ -5,7 +5,8 @@ PROJ := bforcesha
 
 SRC := src/main.c \
 	src/hash.c \
-	src/bruteforce.c
+	src/bruteforce.c \
+	src/filemanager.c
 
 INCLUDE := -Iinclude
 

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <openssl/evp.h>
 
-static void digestToCString(unsigned char digest[32], char cstring[65]) {
+void digestToCString(unsigned char digest[32], char cstring[65]) {
     for (unsigned int index = 0; index < 32; ++index) {
         sprintf(cstring + (index << 1), "%02X", digest[index]);
     }

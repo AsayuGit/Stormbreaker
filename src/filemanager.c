@@ -1,8 +1,18 @@
 #include "filemanager.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+
+int fetchLine(FILE* file, char* buffer, size_t buffLen) {
+    unsigned int buffIndex = 0;
+    char c = fgetc(file);
+    for (; (buffIndex < (buffLen - 1)) && (c != EOF) && (c != '\n'); c = fgetc(file)) {
+        buffer[buffIndex++] = c;
+    }
+    buffer[buffIndex] = '\0';
+    
+    return (buffIndex) ? buffIndex : EOF;
+}
 
 struct wordlist loadWordlist(const char* path) {
     FILE* wordlistFile = fopen(path, "r");

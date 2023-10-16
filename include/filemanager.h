@@ -2,11 +2,14 @@
 #define _FILEMANAGER_H
 
 #include <stddef.h>
+#include <stdio.h>
 
 struct wordlist {
     char** words;
     size_t length;
 };
+
+int fetchLine(FILE* file, char* buffer, size_t buffLen);
 
 struct wordlist loadWordlist(const char* path);
 

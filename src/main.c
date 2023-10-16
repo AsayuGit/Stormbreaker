@@ -6,7 +6,7 @@
 #include "hash.h"
 
 int main(int argc, char** argv) {
-    createRainbow("tiny.txt", "rainbow.txt");
+    createRainbow("rockyou.txt", "rainbow.txt");
     return 0;
 
     unsigned char targetDigest[32];

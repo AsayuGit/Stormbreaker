@@ -11,7 +11,7 @@ SRC := src/main.c \
 
 INCLUDE := -Iinclude
 
-CFLAGS := -Wall
+CFLAGS := -g -Wall
 LIBS := -lcrypto -lpthread
 
 all:

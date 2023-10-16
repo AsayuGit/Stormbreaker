@@ -102,3 +102,12 @@ void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, uns
     fclose(output);
     fclose(input);
 }
+
+HashTable* loadRainbow(const char* rainbowPath) {
+    FILE* input = fopen(rainbowPath, "r");
+    if (!input) return NULL;
+
+    fclose(input);
+
+    return NULL;
+}

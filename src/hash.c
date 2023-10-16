@@ -29,3 +29,13 @@ void hashCString(char outbuffer[65], const char* inbuffer) {
     hash(digest, inbuffer);
     digestToCString(digest, outbuffer);
 }
+
+unsigned int hashIndex(const char* data, size_t size) {
+    unsigned int index = 0;
+
+    for (unsigned int i = 0; i < size; ++i) {
+        index = (index ^ data[i]) << 1;
+    }
+
+    return index;
+}

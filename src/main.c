@@ -7,6 +7,9 @@
 
 int main(int argc, char** argv) {
     createRainbow("rockyou.txt", "rainbow.txt");
+    HashTable* rainbowTable = loadRainbow("rainbow.txt");
+    
+    printf("%p\n", rainbowTable);
     return 0;
 
     unsigned char targetDigest[32];

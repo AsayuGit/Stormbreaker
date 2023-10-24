@@ -21,6 +21,7 @@ void displayHelp() {
         "\t-L/--Lookup:    Lookup an hash to find its originating password\n"
         "\t-o/--output:    Set the output file for the operation\n"
         "\t-i/--input:     Set the input file for the operation\n"
+        "\t-t/--table:     Set the table file in L mode\n"
         "\t-a/--algorythm: Set the algorythm used for generation\n"
     );
 }
@@ -30,9 +31,17 @@ int main(int argc, char** argv) {
     bool gMode = false;
     bool lMode = false;
 
-    char* output = "rainbow.table";
-    char* input = "rainbow.table";
+    char* inputPath = NULL;
+    char* outputPath = NULL;
+    char* tablePath = NULL;
+
+    FILE* input = stdin;
+    FILE* output = stdout;
+    
     char algo[ALGO_BUF_LEN] = "SHA256";
+
+    unsigned int nbOfThreads = 0;
+    int status = 0;
 
     static struct option long_options[] = {
         {"help",  no_argument, 0, 'h'},
@@ -40,13 +49,14 @@ int main(int argc, char** argv) {
         {"Lookup",  no_argument, 0, 'L'},
         {"output",  required_argument, 0, 'o'},
         {"input",  required_argument, 0, 'i'},
+        {"table",  required_argument, 0, 't'},
         {"algorithm",  required_argument, 0, 'a'},
         {0, 0, 0, 0}
     };
 
     char opt;
     int longopt_index;
-    while ((opt = getopt_long(argc, argv, "hGLo:i:a:", long_options, &longopt_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hGLo:i:t:a:", long_options, &longopt_index)) != -1) {
         switch (opt) {
             case 'h':
                 displayHelp();
@@ -58,10 +68,13 @@ int main(int argc, char** argv) {
                 lMode = true;
                 break;
             case 'o':
-                output = optarg;
+                outputPath = optarg;
                 break;
             case 'i':
-                input = optarg;
+                inputPath = optarg;
+                break;
+            case 't':
+                tablePath = optarg;
                 break;
             case 'a':
                 if (strlen(optarg) > ALGO_BUF_LEN) {
@@ -76,27 +89,29 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (inputPath) input = fopen(inputPath, "r");
+    if (outputPath) output = fopen(outputPath, "w");
 
     // Mode G
-    if (gMode) createRainbow("rockyou.txt", output, algo);
+    if (gMode) status = createRainbow(input, output, algo, nbOfThreads);
 
     // Mode L
     if (lMode) {
-        printf("Loading Table...\n");
-        HashTable* rainbowTable = loadRainbow(input);
+        FILE* tableFile = fopen(tablePath, "r");
+        HashTable* rainbowTable = loadRainbow(tableFile);
         if (!rainbowTable) {
-            fprintf(stderr, "ERROR: Unable to load %s !\n", input);
+            fprintf(stderr, "ERROR: Unable to load table from input !\n");
             return -1;
         }
 
-        printf("Table Loaded !\n");
-        
-        char* data = getHashTable(rainbowTable, "350A21E0A8F81DA2BD8E25E418B96D527C0C352D73B43A5A1E9F1B8FEA9EB43C");
-        printf("Data: %s\n", data);
-
-
+        status = solveRainbow(rainbowTable, input, output, nbOfThreads);
         freeHashTable(rainbowTable);
+
+        fclose(tableFile);
     }
 
-    return 0;
+    if (inputPath) fclose(input);
+    if (outputPath) fclose(output);
+
+    return status;
 }

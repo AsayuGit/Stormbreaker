@@ -3,9 +3,10 @@
 
 #include "hashTable.h"
 
-void createRainbow(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm);
-void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm, unsigned int nbOfThreads);
+#include <stdio.h>
 
-HashTable* loadRainbow(const char* rainbowPath);
+int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int nbOfThreads);
+HashTable* loadRainbow(FILE* input);
+int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfThreads);
 
 #endif

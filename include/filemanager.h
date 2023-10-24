@@ -11,6 +11,7 @@ struct wordlist {
 
 int fetchLine(FILE* file, char* buffer, size_t buffLen);
 size_t getLineCount(FILE* file);
+void strToLower(char* cstring);
 
 struct wordlist loadWordlist(const char* path);
 

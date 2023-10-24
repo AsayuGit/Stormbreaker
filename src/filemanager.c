@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 // Char by char to get arround "corrupted" strings
 int fetchLine(FILE* file, char* buffer, size_t buffLen) {
@@ -32,10 +33,16 @@ size_t getLineCount(FILE* file) {
     for (char c = getc(file); c != EOF; c = getc(file)) {
         if (c == '\n') ++linecount;
     }
-    
+
     fseek(file, 0, SEEK_SET); // Go back to begining of the file
 
     return linecount;
+}
+
+void strToLower(char* cstring) {
+    for (; *cstring != '\0'; ++cstring) {
+        *cstring = tolower(*cstring);
+    }
 }
 
 struct wordlist loadWordlist(const char* path) {

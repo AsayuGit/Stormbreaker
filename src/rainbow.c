@@ -54,16 +54,9 @@ void* rainbowThread(void* args) {
     return NULL;
 }
 
-void createRainbow(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm) {
-    createRainbowEx(wordlistInPath, rainbowOutPath, algorithm, get_nprocs());
-}
-
-void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm, unsigned int nbOfThreads) {
-    if (!wordlistInPath || !rainbowOutPath) return;
-
-    FILE* input = fopen(wordlistInPath, "r"); // Open wordlist (r)
-    FILE* output = fopen(rainbowOutPath, "w"); // Open rainbow (w)
-    if (!input | !output) return;
+int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int nbOfThreads) {
+    if (!input || !output) return -1;
+    if (nbOfThreads == 0) nbOfThreads = get_nprocs();
 
     pthread_t* threads = (pthread_t*)calloc(nbOfThreads, sizeof(pthread_t));
     pthread_mutex_t inputMutex;
@@ -92,17 +85,19 @@ void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, con
 
     free(threads);
 
-    // Close files
-    fclose(output);
-    fclose(input);
+    return 0;
 }
 
-HashTable* loadRainbow(const char* rainbowPath) {
-    FILE* input = fopen(rainbowPath, "r");
+HashTable* loadRainbow(FILE* input) {
     if (!input) return NULL;
 
     HashTable* table = createHashTable(getLineCount(input));
+    if (!table) {
+        fprintf(stderr, "ERROR: Unable to create hashtable !\n");
+        return NULL;
+    }
 
+    printf("Loading Table...\n");
     char buffer[BUFF_LEN];
     while (fetchLine(input, buffer, BUFF_LEN) != EOF) {
         char* hash = strtok(buffer, ":");
@@ -110,7 +105,23 @@ HashTable* loadRainbow(const char* rainbowPath) {
 
         insertHashTable(table, hash, password);
     }
+    printf("Table Loaded !\n");
 
-    fclose(input);
     return table;
+}
+
+int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfThreads) {
+    if (!table || !input || !output) return -1;
+    if (nbOfThreads == 0) nbOfThreads = get_nprocs();
+
+    char key[BUFF_LEN];
+    char* data;
+    while (fetchLine(input, key, BUFF_LEN) != EOF) {
+        strToLower(key);
+        if ((data = getHashTable(table, key))) {
+            printf("MATCH %s %s\n", key, data);
+        }
+    }
+
+    return 0;
 }

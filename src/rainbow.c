@@ -54,11 +54,11 @@ void* rainbowThread(void* args) {
     return NULL;
 }
 
-void createRainbow(const char* wordlistInPath, const char* rainbowOutPath) {
-    createRainbowEx(wordlistInPath, rainbowOutPath, get_nprocs());
+void createRainbow(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm) {
+    createRainbowEx(wordlistInPath, rainbowOutPath, algorithm, get_nprocs());
 }
 
-void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, unsigned int nbOfThreads) {
+void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm, unsigned int nbOfThreads) {
     if (!wordlistInPath || !rainbowOutPath) return;
 
     FILE* input = fopen(wordlistInPath, "r"); // Open wordlist (r)

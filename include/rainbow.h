@@ -3,8 +3,8 @@
 
 #include "hashTable.h"
 
-void createRainbow(const char* wordlistInPath, const char* rainbowOutPath);
-void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, unsigned int nbOfThreads);
+void createRainbow(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm);
+void createRainbowEx(const char* wordlistInPath, const char* rainbowOutPath, const char* algorithm, unsigned int nbOfThreads);
 
 HashTable* loadRainbow(const char* rainbowPath);
 

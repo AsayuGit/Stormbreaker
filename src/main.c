@@ -6,10 +6,16 @@
 #include "hash.h"
 
 int main(int argc, char** argv) {
-    createRainbow("rockyou.txt", "rainbow.txt");
-    HashTable* rainbowTable = loadRainbow("rainbow.txt");
+    //createRainbow("rockyou.txt", "rainbow.txt");
+    HashTable* rainbowTable = loadRainbow("rainbow.txt2");
     
-    printf("%p\n", rainbowTable);
+    printf("\nRainbow : %p\n", rainbowTable);
+
+    char* data = getHashTable(rainbowTable, "B54A1AF8B666F61C2DD5AE8F8A543133409FD28C3B78064C5DB993BF2C8E77BC");
+    printf("Data: %s\n", data);
+
+
+    freeHashTable(rainbowTable);
     return 0;
 
     unsigned char targetDigest[32];

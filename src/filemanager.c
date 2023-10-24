@@ -3,15 +3,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Char by char to get arround "corrupted" strings
 int fetchLine(FILE* file, char* buffer, size_t buffLen) {
+    if (!buffer) return EOF;
+    if (!buffLen) return EOF;
+    --buffLen;
+
     unsigned int buffIndex = 0;
-    char c = fgetc(file);
-    for (; (buffIndex < (buffLen - 1)) && (c != EOF) && (c != '\n'); c = fgetc(file)) {
-        buffer[buffIndex++] = c;
-    }
+    char c = '\0';
+    do {
+        c = fgetc(file);
+        if (c == '\n') break;
+        
+        buffer[buffIndex] = c;
+        ++buffIndex;
+        
+        if (buffIndex > buffLen) break;
+    } while (c != EOF);
+
     buffer[buffIndex] = '\0';
-    
-    return (buffIndex) ? buffIndex : EOF;
+    return c;
 }
 
 struct wordlist loadWordlist(const char* path) {

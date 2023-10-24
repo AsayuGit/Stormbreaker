@@ -10,7 +10,6 @@
 #include "filemanager.h"
 
 #define BUFF_LEN 256
-#define NB_OF_STAGES 4
 
 struct rainbowArgs {
     FILE* input;
@@ -40,16 +39,11 @@ void* rainbowThread(void* args) {
     while (safeFetchLine(threadArgs->input, password, BUFF_LEN, threadArgs->inputMutex) != EOF) {
         // Compute pass couple
 
-        strcpy(reducedPassword, password);
-        for (unsigned int i = 0; i < NB_OF_STAGES; ++i) {
-            // 1. hash password
-            hash(digest, reducedPassword);
+        // 1. hash password
+        hash(digest, password);
 
-            // 2. reduce hash
-            digestToCString(digest, reducedPassword);
-            
-            // 3. repeat as needed
-        }
+        // 2. reduce hash
+        digestToCString(digest, reducedPassword);
 
         // write back
         pthread_mutex_lock(threadArgs->outputMutex);
@@ -107,7 +101,18 @@ HashTable* loadRainbow(const char* rainbowPath) {
     FILE* input = fopen(rainbowPath, "r");
     if (!input) return NULL;
 
-    fclose(input);
+    HashTable* table = createHashTable(100);
 
-    return NULL;
+    char buffer[BUFF_LEN];
+    while (fetchLine(input, buffer, BUFF_LEN) != EOF) {
+        char* hash = strtok(buffer, ":");
+        char* password = strtok(NULL, ":");
+
+        printf("Hash : >%s< | Password : >%s<\n", hash, password);
+
+        insertHashTable(table, hash, password);
+    }
+
+    fclose(input);
+    return table;
 }

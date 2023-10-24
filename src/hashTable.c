@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 struct HashTable {
     LinkedList** array;
@@ -31,8 +32,10 @@ void insertHashTable(HashTable* table, char* key, char* data) {
     // Derive the table index
     unsigned int tableIndex = hashIndex(key, strlen(key)) % table->size;
 
+    //printf("Inserting [%s, %s] at %d\n", key, data, tableIndex);
+
     // Insert the new linked list node
-    insertLinkedList(&table->array[tableIndex], key, data);
+    insertLinkedList(&(table->array[tableIndex]), key, data);
 }
 
 char* getHashTable(HashTable* table, char* key) {

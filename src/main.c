@@ -7,7 +7,9 @@
 
 int main(int argc, char** argv) {
     //createRainbow("rockyou.txt", "rainbow.txt");
-    HashTable* rainbowTable = loadRainbow("rainbow.txt2");
+    printf("Loading Table...\n");
+    HashTable* rainbowTable = loadRainbow("rainbow.txt");
+    printf("Table Loaded !\n");
     
     printf("\nRainbow : %p\n", rainbowTable);
 

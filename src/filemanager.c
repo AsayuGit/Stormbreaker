@@ -25,6 +25,19 @@ int fetchLine(FILE* file, char* buffer, size_t buffLen) {
     return c;
 }
 
+size_t getLineCount(FILE* file) {
+    if (!file) return 0;
+
+    size_t linecount = 0;
+    for (char c = getc(file); c != EOF; c = getc(file)) {
+        if (c == '\n') ++linecount;
+    }
+    
+    fseek(file, 0, SEEK_SET); // Go back to begining of the file
+
+    return linecount;
+}
+
 struct wordlist loadWordlist(const char* path) {
     FILE* wordlistFile = fopen(path, "r");
 

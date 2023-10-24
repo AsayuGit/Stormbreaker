@@ -10,6 +10,7 @@ struct wordlist {
 };
 
 int fetchLine(FILE* file, char* buffer, size_t buffLen);
+size_t getLineCount(FILE* file);
 
 struct wordlist loadWordlist(const char* path);
 

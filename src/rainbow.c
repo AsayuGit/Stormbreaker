@@ -101,14 +101,12 @@ HashTable* loadRainbow(const char* rainbowPath) {
     FILE* input = fopen(rainbowPath, "r");
     if (!input) return NULL;
 
-    HashTable* table = createHashTable(100);
+    HashTable* table = createHashTable(getLineCount(input));
 
     char buffer[BUFF_LEN];
     while (fetchLine(input, buffer, BUFF_LEN) != EOF) {
         char* hash = strtok(buffer, ":");
         char* password = strtok(NULL, ":");
-
-        printf("Hash : >%s< | Password : >%s<\n", hash, password);
 
         insertHashTable(table, hash, password);
     }

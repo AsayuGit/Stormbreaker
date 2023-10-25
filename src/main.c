@@ -87,18 +87,30 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (inputPath) input = fopen(inputPath, "r");
-    if (outputPath) output = fopen(outputPath, "w");
+    if (!status && inputPath) {
+        if (!(input = fopen(inputPath, "r"))) {
+            fprintf(stderr, "FATAL: Cannot read file %s\n", inputPath);
+            status = -1;
+        }
+    }
+
+
+    if (!status && outputPath) {
+        if (!(output = fopen(outputPath, "w"))) {
+            fprintf(stderr, "FATAL: Cannot write file %s\n", outputPath);
+            status = -1;
+        }
+    }
 
     // Mode G
-    if (gMode) status = createRainbow(input, output, algo, nbOfThreads);
+    if (!status && gMode) status = createRainbow(input, output, algo, nbOfThreads);
 
     // Mode L
-    if (lMode) {
+    if (!status && lMode) {
         FILE* tableFile = fopen(tablePath, "r");
         HashTable* rainbowTable = loadRainbow(tableFile);
         if (!rainbowTable) {
-            fprintf(stderr, "ERROR: Unable to load table from input !\n");
+            fprintf(stderr, "FATAL: Unable to load table from input !\n");
             return -1;
         }
 

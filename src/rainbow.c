@@ -78,7 +78,7 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
 
     const EVP_MD* algo = EVP_get_digestbyname(algorithm);
     if (!algo) {
-        fprintf(stderr, "ERROR: Digest Invalid !\n");
+        fprintf(stderr, "FATAL: Digest Invalid !\n");
         return -1;
     }
 
@@ -114,7 +114,7 @@ HashTable* loadRainbow(FILE* input) {
     printf("End\n");
     HashTable* table = createHashTable(lineCount);
     if (!table) {
-        fprintf(stderr, "ERROR: Unable to create hashtable !\n");
+        fprintf(stderr, "FATAL: Unable to create hashtable !\n");
         return NULL;
     }
 

@@ -109,16 +109,13 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
 HashTable* loadRainbow(FILE* input) {
     if (!input) return NULL;
 
-    printf("Start\n");
     size_t lineCount = getLineCount(input);
-    printf("End\n");
     HashTable* table = createHashTable(lineCount);
     if (!table) {
         fprintf(stderr, "FATAL: Unable to create hashtable !\n");
         return NULL;
     }
 
-    printf("Loading Table...\n");
     char buffer[BUFF_LEN];
     while (fetchLine(input, buffer, BUFF_LEN) != EOF) {
         char* hash = strtok(buffer, ":");
@@ -126,7 +123,6 @@ HashTable* loadRainbow(FILE* input) {
 
         insertHashTable(table, hash, password);
     }
-    printf("Table Loaded !\n");
 
     return table;
 }

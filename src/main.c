@@ -107,12 +107,14 @@ int main(int argc, char** argv) {
 
     // Mode L
     if (!status && lMode) {
+        printf("INFO: Loading dict file: %s\n", tablePath);
         FILE* tableFile = fopen(tablePath, "r");
         HashTable* rainbowTable = loadRainbow(tableFile);
         if (!rainbowTable) {
-            fprintf(stderr, "FATAL: Unable to load table from input !\n");
+            fprintf(stderr, "FATAL: Cannot load dict file %s\n", tablePath);
             return -1;
         }
+        printf("INFO: Ready !\n");
 
         status = solveRainbow(rainbowTable, input, output, nbOfThreads);
         freeHashTable(rainbowTable);

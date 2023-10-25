@@ -1,6 +1,8 @@
 #ifndef _HASHTABLE_H
 #define _HASHTABLE_H
 
+// The hash table struct is opaque to force the user to use
+// the provided functions
 typedef struct HashTable HashTable;
 
 #include <stddef.h>

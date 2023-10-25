@@ -14,8 +14,20 @@ INCLUDE := -Iinclude
 CFLAGS := -O2 -Wall
 LIBS := -lcrypto -lpthread
 
-all:
+build:
 	$(CC) -o $(PROJ) $(CFLAGS) $(SRC) $(INCLUDE) $(LIBS)
+
+clean:
+	rm -rf $(PROJ)
 
 run:
 	@./$(PROJ)
+
+docker-build:
+	docker build -t $(PROJ):latest .
+
+docker-export:
+	docker save $(PROJ):latest > $(PROJ)-latest.tar
+
+docker-run:
+	docker run --rm -it -v $(CURDIR):$(CURDIR) -w $(CURDIR) $(PROJ) /bin/bash

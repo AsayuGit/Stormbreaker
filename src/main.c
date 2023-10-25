@@ -10,6 +10,7 @@
 
 #define ALGO_BUF_LEN 30
 
+// display the help menu whenever the -h option is used
 void displayHelp() {
     printf(
         "bforceSha: [mode] [options]\n"
@@ -29,18 +30,25 @@ int main(int argc, char** argv) {
     bool gMode = false;
     bool lMode = false;
 
+    // Optional file paths
     char* inputPath = NULL;
     char* outputPath = NULL;
     char* tablePath = NULL;
 
+    // Init streams to the standard console if no path is specified
     FILE* input = stdin;
     FILE* output = stdout;
     
-    char algo[ALGO_BUF_LEN] = "SHA256";
+    // Algorythm used by the hashing function
+    char algo[ALGO_BUF_LEN] = "SHA256"; // Set the default Algorythm to SHA256
 
+    // The number of threads to use for generation (0 = As many as available hardware threads)
     unsigned int nbOfThreads = 0;
+    
+    // Program return status
     int status = 0;
 
+    // Available command line options
     static struct option long_options[] = {
         {"help",  no_argument, 0, 'h'},
         {"Generate",  no_argument, 0, 'G'},
@@ -49,16 +57,19 @@ int main(int argc, char** argv) {
         {"input",  required_argument, 0, 'i'},
         {"table",  required_argument, 0, 't'},
         {"algorithm",  required_argument, 0, 'a'},
+        {"jobs",  required_argument, 0, 'j'},
         {0, 0, 0, 0}
     };
 
     char opt;
     int longopt_index;
-    while ((opt = getopt_long(argc, argv, "hGLo:i:t:a:", long_options, &longopt_index)) != -1) {
+    // Parse each command line argument and set the appropriate flags
+    while ((opt = getopt_long(argc, argv, "hGLo:i:t:a:j:", long_options, &longopt_index)) != -1) {
         switch (opt) {
             case 'h':
                 displayHelp();
-                return 0;
+                status = 0;
+                break;
             case 'G':
                 gMode = true;
                 break;
@@ -77,16 +88,27 @@ int main(int argc, char** argv) {
             case 'a':
                 if (strlen(optarg) > ALGO_BUF_LEN) {
                     fprintf(stderr, "Algorythm Invalid\n");
-                    return -1;
+                    status = -1;
                 } else strcpy(algo, optarg);
                 break;
+            case 'j':
+                int intarg = atoi(optarg); 
+                if (intarg > 0) {
+                    nbOfThreads = intarg;
+                } else {
+                    fprintf(stderr, "FATAL: Invalid number of threads\n");
+                    status = -1;
+                }
+                break;
             case '?':
-                return -1;
+                status = -1;
+                break;
             default:
                 break;
         }
     }
 
+    // Try to open the input file if specified
     if (!status && inputPath) {
         if (!(input = fopen(inputPath, "r"))) {
             fprintf(stderr, "FATAL: Cannot read file %s\n", inputPath);
@@ -94,7 +116,7 @@ int main(int argc, char** argv) {
         }
     }
 
-
+    // Try to open the output file if specified
     if (!status && outputPath) {
         if (!(output = fopen(outputPath, "w"))) {
             fprintf(stderr, "FATAL: Cannot write file %s\n", outputPath);
@@ -107,6 +129,7 @@ int main(int argc, char** argv) {
 
     // Mode L
     if (!status && lMode) {
+        // Load the specified dict file
         printf("INFO: Loading dict file: %s\n", tablePath);
         FILE* tableFile = fopen(tablePath, "r");
         HashTable* rainbowTable = loadRainbow(tableFile);
@@ -116,12 +139,15 @@ int main(int argc, char** argv) {
         }
         printf("INFO: Ready !\n");
 
+        // Try to solve each input hash
         status = solveRainbow(rainbowTable, input, output, nbOfThreads);
+        
+        // Free the previously loaded dict file
         freeHashTable(rainbowTable);
-
         fclose(tableFile);
     }
 
+    // Close open files if any
     if (inputPath) fclose(input);
     if (outputPath) fclose(output);
 

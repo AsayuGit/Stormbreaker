@@ -1,7 +1,6 @@
 #include "hashTable.h"
 
 #include "linkedList.h"
-#include "hash.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +25,16 @@ void freeHashTable(HashTable* table) {
         freeLinkedList(table->array[tableIndex]);
     }
     free(table);
+}
+
+unsigned int hashIndex(const char* data, size_t size) {
+    unsigned int index = 0;
+
+    for (unsigned int i = 0; i < size; ++i) {
+        index = (index ^ data[i]) << 1;
+    }
+
+    return index;
 }
 
 void insertHashTable(HashTable* table, char* key, char* data) {

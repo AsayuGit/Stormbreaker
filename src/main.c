@@ -7,8 +7,6 @@
 #include <string.h>
 
 #include "rainbow.h"
-#include "bruteforce.h"
-#include "hash.h"
 
 #define ALGO_BUF_LEN 30
 

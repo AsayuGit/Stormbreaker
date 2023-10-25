@@ -5,13 +5,14 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/sysinfo.h>
+#include <openssl/evp.h>
 
-#include "hash.h"
 #include "filemanager.h"
 
 #define BUFF_LEN 256
 
 struct rainbowArgs {
+    const char* digestName;
     FILE* input;
     FILE* output;
     pthread_mutex_t *inputMutex;
@@ -32,24 +33,35 @@ void* rainbowThread(void* args) {
     struct rainbowArgs* threadArgs = args;
 
     char password[BUFF_LEN];
-    char reducedPassword[BUFF_LEN];
-    unsigned char digest[32];
+    char base64Password[BUFF_LEN];
+    unsigned char digest[EVP_MAX_MD_SIZE];
+
+    // Init
+    const EVP_MD* digestType = EVP_get_digestbyname(threadArgs->digestName);
+    EVP_MD_CTX* shaContext = EVP_MD_CTX_new();
 
     // Fetch a password
     while (safeFetchLine(threadArgs->input, password, BUFF_LEN, threadArgs->inputMutex) != EOF) {
         // Compute pass couple
 
         // 1. hash password
-        hash(digest, password);
+        EVP_DigestInit(shaContext, digestType);
+        EVP_DigestUpdate(shaContext, password, strlen(password) * sizeof(char));
+        unsigned int digestSize;
+        EVP_DigestFinal(shaContext, digest, &digestSize);
 
-        // 2. reduce hash
-        digestToCString(digest, reducedPassword);
+        // 2. reduce hash 
+        for (unsigned int index = 0; index < digestSize; ++index) {
+            sprintf(base64Password + (index << 1), "%02x", digest[index]);
+        }
 
         // write back
         pthread_mutex_lock(threadArgs->outputMutex);
-        fprintf(threadArgs->output, "%s:%s\n", reducedPassword, password);
+        fprintf(threadArgs->output, "%s:%s\n", base64Password, password);
         pthread_mutex_unlock(threadArgs->outputMutex);
     }
+
+    EVP_MD_CTX_free(shaContext);
 
     return NULL;
 }
@@ -66,6 +78,7 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
     pthread_mutex_init(&outputMutex, NULL);
 
     struct rainbowArgs args = {
+        algorithm,
         input,
         output,
         &inputMutex,
@@ -91,7 +104,10 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
 HashTable* loadRainbow(FILE* input) {
     if (!input) return NULL;
 
-    HashTable* table = createHashTable(getLineCount(input));
+    printf("Start\n");
+    size_t lineCount = getLineCount(input);
+    printf("End\n");
+    HashTable* table = createHashTable(lineCount);
     if (!table) {
         fprintf(stderr, "ERROR: Unable to create hashtable !\n");
         return NULL;

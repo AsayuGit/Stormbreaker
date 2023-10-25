@@ -4,8 +4,6 @@ LD = gcc
 PROJ := bforcesha
 
 SRC := src/main.c \
-	src/hash.c \
-	src/bruteforce.c \
 	src/filemanager.c \
 	src/rainbow.c \
 	src/hashTable.c \
@@ -13,7 +11,7 @@ SRC := src/main.c \
 
 INCLUDE := -Iinclude
 
-CFLAGS := -g -Wall
+CFLAGS := -O2 -Wall
 LIBS := -lcrypto -lpthread
 
 all:

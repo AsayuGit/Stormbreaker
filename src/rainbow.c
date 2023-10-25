@@ -12,7 +12,7 @@
 #define BUFF_LEN 256
 
 struct rainbowArgs {
-    const char* digestName;
+    const EVP_MD* algorithm;
     FILE* input;
     FILE* output;
     pthread_mutex_t *inputMutex;
@@ -37,7 +37,6 @@ void* rainbowThread(void* args) {
     unsigned char digest[EVP_MAX_MD_SIZE];
 
     // Init
-    const EVP_MD* digestType = EVP_get_digestbyname(threadArgs->digestName);
     EVP_MD_CTX* shaContext = EVP_MD_CTX_new();
 
     // Fetch a password
@@ -45,7 +44,7 @@ void* rainbowThread(void* args) {
         // Compute pass couple
 
         // 1. hash password
-        EVP_DigestInit(shaContext, digestType);
+        EVP_DigestInit(shaContext, threadArgs->algorithm);
         EVP_DigestUpdate(shaContext, password, strlen(password) * sizeof(char));
         unsigned int digestSize;
         EVP_DigestFinal(shaContext, digest, &digestSize);
@@ -77,8 +76,14 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
     pthread_mutex_init(&inputMutex, NULL);
     pthread_mutex_init(&outputMutex, NULL);
 
+    const EVP_MD* algo = EVP_get_digestbyname(algorithm);
+    if (!algo) {
+        fprintf(stderr, "ERROR: Digest Invalid !\n");
+        return -1;
+    }
+
     struct rainbowArgs args = {
-        algorithm,
+        algo,
         input,
         output,
         &inputMutex,

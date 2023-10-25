@@ -10,6 +10,7 @@
 #include "stringTools.h"
 
 #define BUFF_LEN 256
+#define STEP_RATE 2
 
 struct rainbowArgs {
     const EVP_MD* algorithm;
@@ -116,13 +117,21 @@ HashTable* loadRainbow(FILE* input) {
         return NULL;
     }
 
+    size_t nbOfLoadedHashes = 0;
+    size_t step = 10;
     char buffer[BUFF_LEN];
     while (fetchLine(input, buffer, BUFF_LEN) != EOF) {
         char* hash = strtok(buffer, ":");
         char* password = strtok(NULL, ":");
 
         insertHashTable(table, hash, password);
+        ++nbOfLoadedHashes;
+        if (nbOfLoadedHashes >= step) {
+            printf("INFO: Loading %ld hashes...\n", nbOfLoadedHashes);
+            step *= STEP_RATE;
+        } 
     }
+    printf("INFO: %ld hashs loaded.\n", nbOfLoadedHashes);
 
     return table;
 }
@@ -136,7 +145,7 @@ int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfT
     while (fetchLine(input, key, BUFF_LEN) != EOF) {
         strToLower(key);
         if ((data = getHashTable(table, key))) {
-            printf("MATCH %s %s\n", key, data);
+            fprintf(output, "MATCH %s %s\n", key, data);
         }
     }
 

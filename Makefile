@@ -4,7 +4,7 @@ LD = gcc
 PROJ := bforcesha
 
 SRC := src/main.c \
-	src/filemanager.c \
+	src/stringTools.c \
 	src/rainbow.c \
 	src/hashTable.c \
 	src/linkedList.c

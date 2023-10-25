@@ -7,7 +7,7 @@
 #include <sys/sysinfo.h>
 #include <openssl/evp.h>
 
-#include "filemanager.h"
+#include "stringTools.h"
 
 #define BUFF_LEN 256
 

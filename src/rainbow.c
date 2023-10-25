@@ -18,6 +18,8 @@ struct rainbowArgs {
     FILE* output;
     pthread_mutex_t *inputMutex;
     pthread_mutex_t *outputMutex;
+    size_t nbOfHashWritten;
+    size_t step;
 };
 
 int safeFetchLine(FILE* file, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
@@ -58,6 +60,11 @@ void* rainbowThread(void* args) {
         // write back
         pthread_mutex_lock(threadArgs->outputMutex);
         fprintf(threadArgs->output, "%s:%s\n", base64Password, password);
+        threadArgs->nbOfHashWritten++;
+        if (threadArgs->nbOfHashWritten >= threadArgs->step) {
+            printf("INFO: %ld hashes written...\n", threadArgs->nbOfHashWritten);
+            threadArgs->step *= STEP_RATE;
+        }
         pthread_mutex_unlock(threadArgs->outputMutex);
     }
 
@@ -88,7 +95,9 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
         input,
         output,
         &inputMutex,
-        &outputMutex
+        &outputMutex,
+        0,
+        10
     };
 
     for (unsigned int threadID = 0; threadID < nbOfThreads; ++threadID) {
@@ -98,6 +107,8 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
     for (unsigned int threadID = 0; threadID < nbOfThreads; ++threadID) {
         pthread_join(threads[threadID], NULL);
     }
+
+    printf("INFO: %ld hashes written.\n", args.nbOfHashWritten);
 
     pthread_mutex_destroy(&inputMutex);
     pthread_mutex_destroy(&outputMutex);

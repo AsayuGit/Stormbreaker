@@ -40,6 +40,7 @@ InFileBuffer* openInFileBuffer(FILE* file, size_t size) {
     return newBufferedFile;
 }
 
+// TODO: Should check the out buffer length
 size_t readInFileBuffer(InFileBuffer* fileBuffer, char* data, size_t size) {
     if (fileBuffer->bufferIndex + size > fileBuffer->bufferedSize) {
         size_t segmentSize = fileBuffer->bufferedSize - fileBuffer->bufferIndex;
@@ -61,8 +62,8 @@ size_t readInFileBuffer(InFileBuffer* fileBuffer, char* data, size_t size) {
     return size;
 }
 
+// TODO : It is possible to avoir re-fetching the same page if we keep track of it
 size_t getLineCountInFileBuffer(InFileBuffer* fileBuffer) {
-    printf("Asserting file size\n");
     if (!fileBuffer) return 0; // No file, no lines
 
     size_t linecount = 0;
@@ -77,8 +78,21 @@ size_t getLineCountInFileBuffer(InFileBuffer* fileBuffer) {
     fseek(fileBuffer->file, 0, SEEK_SET); // Go back to begining of the file
     fetchPageInFileBuffer(fileBuffer);
 
-    printf("Asserting file size DONE\n");
     return linecount;
+}
+
+void gotoLineInFileBuffer(InFileBuffer* fileBuffer, unsigned int lineNumber) {
+    if (!fileBuffer) return; // No file, no lines
+
+    size_t linecount = 0;
+    fseek(fileBuffer->file, 0, SEEK_SET); // Go back to begining of the file
+    do {
+        fetchPageInFileBuffer(fileBuffer);
+        for (; fileBuffer->bufferIndex < fileBuffer->bufferedSize; ++fileBuffer->bufferIndex) {
+            if (fileBuffer->buffer[fileBuffer->bufferIndex] == '\n') ++linecount;
+            if (linecount == lineNumber) return;
+        }
+    } while (fileBuffer->bufferedSize == fileBuffer->size);
 }
 
 int readLineInFileBuffer(InFileBuffer* fileBuffer, char* buffer, size_t buffLen) {

@@ -36,17 +36,7 @@ struct SolveThreadArgs {
     bool minimalOutput;
 };
 
-int safeFetchLine(FILE* file, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
-    int status;
-    
-    pthread_mutex_lock(mutex); // Locks and unlock the mutex before attempting to access the shared ressource
-    status = fetchLine(file, buffer, buffLen);
-    pthread_mutex_unlock(mutex);
-
-    return status;
-}
-
-int safeReadLineInFileBuffer(InFileBuffer* fileBuffer, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
+static int safeReadLineInFileBuffer(InFileBuffer* fileBuffer, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
     int status;
     
     pthread_mutex_lock(mutex); // Locks and unlock the mutex before attempting to access the shared ressource

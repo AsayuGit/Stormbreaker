@@ -21,7 +21,7 @@ void displayHelp() {
         "\t-o/--output:    Set the output file for the operation\n"
         "\t-i/--input:     Set the input file for the operation\n"
         "\t-t/--table:     Set the table file in L mode\n"
-        "\t-a/--algorythm: Set the algorythm used for generation\n"
+        "\t-a/--algorithm: Set the algorithm used for generation\n"
         "\t-j/--jobs:      Set the number of threads to use for compute\n"
         "\t-m/--minimal:   Reduce the output for testing purposes\n"
     );

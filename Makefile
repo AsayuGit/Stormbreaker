@@ -7,7 +7,9 @@ SRC := src/main.c \
 	src/stringTools.c \
 	src/rainbow.c \
 	src/hashTable.c \
-	src/linkedList.c
+	src/linkedList.c \
+	src/outFileBuffer.c \
+	src/inFileBuffer.c
 
 INCLUDE := -Iinclude
 

@@ -9,6 +9,9 @@
 
 #include "stringTools.h"
 
+#include "outFileBuffer.h"
+#include "inFileBuffer.h"
+
 #define BUFF_LEN 1024
 #define STEP_RATE 2
 
@@ -16,7 +19,7 @@
 struct rainbowArgs {
     const EVP_MD* algorithm;      // Which hashing algorithm to use
     FILE* input;                  // Input where to get the password from
-    FILE* output;                 // Output where to write the dictionary to
+    OutFileBuffer* output;                 // Output where to write the dictionary to
     pthread_mutex_t *inputMutex;  // Read Mutex
     pthread_mutex_t *outputMutex; // Write Mutex
     size_t nbOfHashWritten;       // Total number of hash writen to the dictionary
@@ -64,11 +67,12 @@ void* rainbowThread(void* args) {
         pthread_mutex_lock(threadArgs->outputMutex);
 
         if (!threadArgs->minimalOutput) {
-            fprintf(threadArgs->output, "%s:", base64Password);
+            writeOutFileBuffer(threadArgs->output, base64Password, strlen(base64Password));
+            writeOutFileBuffer(threadArgs->output, ":", 1);
         }
         
-        fputs(password, threadArgs->output);
-        fputc('\n', threadArgs->output);
+        writeOutFileBuffer(threadArgs->output, password, strlen(password));
+        writeOutFileBuffer(threadArgs->output, "\n", 1);
         
         threadArgs->nbOfHashWritten++;
         if (threadArgs->nbOfHashWritten >= threadArgs->step) {
@@ -109,11 +113,14 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
         return -1;
     }
 
+    // Allocate a 256MB outgoing file buffer
+    OutFileBuffer* fileBuffer = openOutFileBuffer(output, 0x10000000);
+
     // And prepare the shared threads arguments
     struct rainbowArgs args = {
         algo,
         input,
-        output,
+        fileBuffer,
         &inputMutex,
         &outputMutex,
         0,
@@ -140,6 +147,8 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
     // And finally free the thread array
     free(threads);
 
+    closeOutFileBuffer(fileBuffer);
+
     return 0;
 }
 
@@ -147,8 +156,12 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
 HashTable* loadRainbow(FILE* input) {
     if (!input) return NULL; // There is nothing to load if there is no input
 
+    InFileBuffer* fileBuffer = openInFileBuffer(input, 0x10000000);
+
     // Attempt to create the line table of the right size for the input file
-    size_t lineCount = getLineCount(input);
+    //size_t lineCount = getLineCount(input);
+    size_t lineCount = getLineCountInFileBuffer(fileBuffer);
+    printf("linecount %ld\n", lineCount);
     HashTable* table = createHashTable(lineCount);
     if (!table) {
         fprintf(stderr, "FATAL: Unable to create hashtable !\n");
@@ -157,11 +170,14 @@ HashTable* loadRainbow(FILE* input) {
 
     size_t nbOfLoadedHashes = 0;
     size_t step = 10;
+
     char buffer[BUFF_LEN];
-    while (fetchLine(input, buffer, BUFF_LEN) != EOF) { // Fetch each combo hash:password from the input
+    while (readLineInFileBuffer(fileBuffer, buffer, BUFF_LEN) != EOF) { // Fetch each combo hash:password from the input
         // Separate the line into its two components
         char* hash = strtok(buffer, ":");
         char* password = strtok(NULL, "\n");
+
+        //printf("%s %s\n", hash, password);
 
         insertHashTable(table, hash, password); // Then insert the data into the hash table
         ++nbOfLoadedHashes; // And keep tract of the number of loaded hashes
@@ -171,6 +187,8 @@ HashTable* loadRainbow(FILE* input) {
         } 
     }
     printf("INFO: %ld hashs loaded.\n", nbOfLoadedHashes);
+
+    closeInFileBuffer(fileBuffer);
 
     return table; // Finaly return the fully loaded rainbow table
 }

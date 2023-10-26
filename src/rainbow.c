@@ -27,6 +27,25 @@ struct rainbowArgs {
     bool minimalOutput;
 };
 
+struct SolveThreadArgs {
+    InFileBuffer* input;
+    OutFileBuffer* output;
+    HashTable* table;
+    pthread_mutex_t* inputMutex;  // Read Mutex
+    pthread_mutex_t* outputMutex; // Write Mutex
+    bool minimalOutput;
+};
+
+int safeFetchLine(FILE* file, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
+    int status;
+    
+    pthread_mutex_lock(mutex); // Locks and unlock the mutex before attempting to access the shared ressource
+    status = fetchLine(file, buffer, buffLen);
+    pthread_mutex_unlock(mutex);
+
+    return status;
+}
+
 int safeReadLineInFileBuffer(InFileBuffer* fileBuffer, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
     int status;
     
@@ -192,25 +211,80 @@ HashTable* loadRainbow(FILE* input) {
     return table; // Finaly return the fully loaded rainbow table
 }
 
+void* solveThread(void* args) {
+    struct SolveThreadArgs* threadArgs = args;
+
+    char key[BUFF_LEN];
+    char* data;
+    while (safeReadLineInFileBuffer(threadArgs->input, key, BUFF_LEN, threadArgs->inputMutex) != EOF) { // For each line of the input
+        strToLower(key);                             // Ensure the hash is in lowercase
+        if (!getHashTable(threadArgs->table, key, &data)) continue;     // Then try to find it in the hash table
+        
+        pthread_mutex_lock(threadArgs->outputMutex);
+        // If found output the match
+        if (!threadArgs->minimalOutput) {
+            writeOutFileBuffer(threadArgs->output, "MATCH ", 6);
+            writeOutFileBuffer(threadArgs->output, key, strlen(key));
+            writeOutFileBuffer(threadArgs->output, " ", 1);
+        }
+        
+        if (data) writeOutFileBuffer(threadArgs->output, data, strlen(data));
+        writeOutFileBuffer(threadArgs->output, "\n", 1);
+
+        pthread_mutex_unlock(threadArgs->outputMutex);
+    }
+
+    return NULL;
+}
+
 // Try to find each hash from the input in the hash table and output matches
 int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfThreads, bool minimalOutput) {
     if (!table || !input || !output) return -1;
     if (nbOfThreads == 0) nbOfThreads = get_nprocs(); // 0 means "All available hardware threads"
 
-    char key[BUFF_LEN];
-    char* data;
-    while (fetchLine(input, key, BUFF_LEN) != EOF) { // For each line of the input
-        strToLower(key);                             // Ensure the hash is in lowercase
-        if (!getHashTable(table, key, &data)) continue;     // Then try to find it in the hash table
-        
-        // If found output the match
-        if (!minimalOutput) {
-            fprintf(output, "MATCH %s ", key);
-        }
-        
-        if (data) fputs(data, output);
-        fputc('\n', output);
+    InFileBuffer* inBuffer = openInFileBuffer(input, 0x10000000);
+    OutFileBuffer* outBuffer = openOutFileBuffer(output, 0x10000000);
+
+    // First, we initialize an array of pthread_t* to store the handle of each thread
+    // This needs to be dynamic in order to adapt to each PC configurations
+    pthread_t* threads = (pthread_t*)calloc(nbOfThreads, sizeof(pthread_t));
+    pthread_mutex_t inputMutex;
+    pthread_mutex_t outputMutex;
+
+    // Then, in order to synchronise each thread and prevent them from corrupting the result
+    // We initialise two mutexes, one for reading the input and the other for writing
+    // To the output
+    pthread_mutex_init(&inputMutex, NULL);
+    pthread_mutex_init(&outputMutex, NULL);
+
+    struct SolveThreadArgs args = {
+        inBuffer,
+        outBuffer,
+        table,    
+        &inputMutex,
+        &outputMutex,
+        minimalOutput,
+    };
+
+    // We start each thread and store its handle in the thread array
+    for (unsigned int threadID = 0; threadID < nbOfThreads; ++threadID) {
+        pthread_create(&threads[threadID], NULL, solveThread , &args);
     }
+
+    // And wait for each thread to exit
+    for (unsigned int threadID = 0; threadID < nbOfThreads; ++threadID) {
+        pthread_join(threads[threadID], NULL);
+    }
+
+    // We destroy each mutex
+    pthread_mutex_destroy(&inputMutex);
+    pthread_mutex_destroy(&outputMutex);
+
+    // And finally free the thread array
+    free(threads);
+
+    closeOutFileBuffer(outBuffer);
+    closeInFileBuffer(inBuffer);
 
     return 0;
 }

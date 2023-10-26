@@ -18,21 +18,20 @@
 // This structs define the args passed to each thread
 struct rainbowArgs {
     const EVP_MD* algorithm;      // Which hashing algorithm to use
-    FILE* input;                  // Input where to get the password from
+    InFileBuffer* input;                  // Input where to get the password from
     OutFileBuffer* output;                 // Output where to write the dictionary to
-    pthread_mutex_t *inputMutex;  // Read Mutex
-    pthread_mutex_t *outputMutex; // Write Mutex
+    pthread_mutex_t* inputMutex;  // Read Mutex
+    pthread_mutex_t* outputMutex; // Write Mutex
     size_t nbOfHashWritten;       // Total number of hash writen to the dictionary
     size_t step;                  // At which step to print out a new Info Log
     bool minimalOutput;
 };
 
-// Same as fetchLine, but in a thread safe way
-int safeFetchLine(FILE* file, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
+int safeReadLineInFileBuffer(InFileBuffer* fileBuffer, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
     int status;
     
     pthread_mutex_lock(mutex); // Locks and unlock the mutex before attempting to access the shared ressource
-    status = fetchLine(file, buffer, buffLen);
+    status = readLineInFileBuffer(fileBuffer, buffer, buffLen);
     pthread_mutex_unlock(mutex);
 
     return status;
@@ -50,7 +49,7 @@ void* rainbowThread(void* args) {
     EVP_MD_CTX* shaContext = EVP_MD_CTX_new();
 
     // Then we Fetch a password from the input
-    while (safeFetchLine(threadArgs->input, password, BUFF_LEN, threadArgs->inputMutex) != EOF) {
+    while (safeReadLineInFileBuffer(threadArgs->input, password, BUFF_LEN, threadArgs->inputMutex) != EOF) {
 
         // We compute its digest
         EVP_DigestInit(shaContext, threadArgs->algorithm);
@@ -115,11 +114,12 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
 
     // Allocate a 256MB outgoing file buffer
     OutFileBuffer* fileBuffer = openOutFileBuffer(output, 0x10000000);
+    InFileBuffer* inFileBuffer = openInFileBuffer(input, 0x10000000);
 
     // And prepare the shared threads arguments
     struct rainbowArgs args = {
         algo,
-        input,
+        inFileBuffer,
         fileBuffer,
         &inputMutex,
         &outputMutex,
@@ -147,6 +147,7 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
     // And finally free the thread array
     free(threads);
 
+    closeInFileBuffer(inFileBuffer);
     closeOutFileBuffer(fileBuffer);
 
     return 0;
@@ -159,18 +160,17 @@ HashTable* loadRainbow(FILE* input) {
     InFileBuffer* fileBuffer = openInFileBuffer(input, 0x10000000);
 
     // Attempt to create the line table of the right size for the input file
-    //size_t lineCount = getLineCount(input);
     size_t lineCount = getLineCountInFileBuffer(fileBuffer);
     printf("linecount %ld\n", lineCount);
+    
     HashTable* table = createHashTable(lineCount);
     if (!table) {
         fprintf(stderr, "FATAL: Unable to create hashtable !\n");
         return NULL;
     }
-
-    size_t nbOfLoadedHashes = 0;
+    
+    size_t nbOfHashLoaded = 0;
     size_t step = 10;
-
     char buffer[BUFF_LEN];
     while (readLineInFileBuffer(fileBuffer, buffer, BUFF_LEN) != EOF) { // Fetch each combo hash:password from the input
         // Separate the line into its two components
@@ -178,16 +178,15 @@ HashTable* loadRainbow(FILE* input) {
         char* password = strtok(NULL, "\n");
 
         //printf("%s %s\n", hash, password);
-
         insertHashTable(table, hash, password); // Then insert the data into the hash table
-        ++nbOfLoadedHashes; // And keep tract of the number of loaded hashes
-        if (nbOfLoadedHashes >= step) {
-            printf("INFO: Loading %ld hashes...\n", nbOfLoadedHashes);
+        ++nbOfHashLoaded; // And keep tract of the number of loaded hashes
+        if (nbOfHashLoaded >= step) {
+            printf("INFO: Loading %ld hashes...\n", nbOfHashLoaded);
             step *= STEP_RATE;
-        } 
+        }
     }
-    printf("INFO: %ld hashs loaded.\n", nbOfLoadedHashes);
 
+    printf("INFO: %ld hashs loaded.\n", nbOfHashLoaded);
     closeInFileBuffer(fileBuffer);
 
     return table; // Finaly return the fully loaded rainbow table

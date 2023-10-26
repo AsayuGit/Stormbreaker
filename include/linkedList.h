@@ -8,8 +8,8 @@ struct LinkedList {
     struct LinkedList* next;
 };
 
-void insertLinkedList(LinkedList** list, char* key, char* data);
-char* getLinkedList(LinkedList* list, char* key);
+LinkedList* insertLinkedList(LinkedList** list, char* key, char* data);
+LinkedList* getLinkedList(LinkedList* list, char* key);
 void freeLinkedList(LinkedList* list);
 
 #endif

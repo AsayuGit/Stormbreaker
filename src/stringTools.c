@@ -25,6 +25,7 @@ int fetchLine(FILE* file, char* buffer, size_t buffLen) {
 
 // Returns the number of lines of a file
 size_t getLineCount(FILE* file) {
+    printf("Asserting file size\n");
     if (!file) return 0; // No file, no lines
 
     // Save the file position before compute
@@ -40,6 +41,7 @@ size_t getLineCount(FILE* file) {
 
     fsetpos(file, &pos); // restore the original file postion after compute
 
+    printf("Asserting file size DONE\n");
     return linecount;
 }
 

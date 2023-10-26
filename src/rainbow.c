@@ -9,7 +9,7 @@
 
 #include "stringTools.h"
 
-#define BUFF_LEN 256
+#define BUFF_LEN 1024
 #define STEP_RATE 2
 
 // This structs define the args passed to each thread
@@ -61,12 +61,15 @@ void* rainbowThread(void* args) {
 
         // Finally we write back the couple hash:password to the output
         pthread_mutex_lock(threadArgs->outputMutex);
+
         fprintf(threadArgs->output, "%s:%s\n", base64Password, password);
+        
         threadArgs->nbOfHashWritten++;
         if (threadArgs->nbOfHashWritten >= threadArgs->step) {
             printf("INFO: %ld hashes written...\n", threadArgs->nbOfHashWritten);
             threadArgs->step *= STEP_RATE;
         }
+        
         pthread_mutex_unlock(threadArgs->outputMutex);
     }
 
@@ -174,7 +177,7 @@ int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfT
     char* data;
     while (fetchLine(input, key, BUFF_LEN) != EOF) { // For each line of the input
         strToLower(key);                             // Ensure the hash is in lowercase
-        if ((data = getHashTable(table, key))) {     // Then try to find it in the hash table
+        if (getHashTable(table, key, &data)) {     // Then try to find it in the hash table
             fprintf(output, "MATCH %s %s\n", key, data); // If found output the match
         }
     }

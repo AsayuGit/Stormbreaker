@@ -69,19 +69,24 @@ unsigned int hashIndex(const char* data, size_t tableSize) {
 }
 
 // Insert an hash and its key into an hashtable
-void insertHashTable(HashTable* table, char* key, char* data) {
+bool insertHashTable(HashTable* table, char* key, char* data) {
     // Derive the table index
     unsigned int tableIndex = hashIndex(key, table->size);
 
     // Insert the new linked list node
-    insertLinkedList(&(table->array[tableIndex]), key, data);
+    return insertLinkedList(&(table->array[tableIndex]), key, data);
 }
 
 // Fetch an hash with its key from an hashtable
-char* getHashTable(HashTable* table, char* key) {
+bool getHashTable(HashTable* table, char* key, char** data) {
     // Derive the table index
     unsigned int tableIndex = hashIndex(key, table->size);
+    
+    LinkedList* node;
+    if ((node = getLinkedList(table->array[tableIndex], key))) { // Try to find the key amongst the linked list
+        (*data) = node->data; // Set the out point to the data
+        return true; // Return success
+    }
 
-    // Return data
-    return getLinkedList(table->array[tableIndex], key);
+    return false; // Return failure
 }

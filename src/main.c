@@ -148,8 +148,8 @@ int main(int argc, char** argv) {
     }
 
     // Close open files if any
-    if (inputPath) fclose(input);
-    if (outputPath) fclose(output);
+    if (inputPath && input) fclose(input);
+    if (outputPath && output) fclose(output);
 
     return status;
 }

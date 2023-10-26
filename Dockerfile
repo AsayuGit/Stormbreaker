@@ -16,7 +16,7 @@ WORKDIR /build
 RUN make
 
 # Make the executable available throughout the container
-RUN mv /build/bforcesha /usr/local/bin/bforcesha
+RUN mv /build/stormbreaker /usr/local/bin/stormbreaker
 
 # Remove the sources from the image
 RUN rm -rf /build

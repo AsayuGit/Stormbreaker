@@ -1,7 +1,7 @@
 CC = gcc
 LD = gcc
 
-PROJ := bforcesha
+PROJ := stormbreaker
 
 SRC := src/main.c \
 	src/stringTools.c \

@@ -13,8 +13,8 @@
 // display the help menu whenever the -h option is used
 void displayHelp() {
     printf(
-        "bforceSha: [mode] [options]\n"
-        "EG: ./bfroceSha -G -a SHA256 -o rainbow.table\n\n"
+        "stormbreaker: [mode] [options]\n"
+        "EG: ./stormbreaker -G -a SHA256 -o rainbow.table\n\n"
         "\t-h/--help:      Display this help message\n"
         "\t-G/--Generate:  Generate a hash table\n"
         "\t-L/--Lookup:    Lookup an hash to find its originating password\n"

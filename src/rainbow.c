@@ -21,6 +21,7 @@ struct rainbowArgs {
     pthread_mutex_t *outputMutex; // Write Mutex
     size_t nbOfHashWritten;       // Total number of hash writen to the dictionary
     size_t step;                  // At which step to print out a new Info Log
+    bool minimalOutput;
 };
 
 // Same as fetchLine, but in a thread safe way
@@ -62,7 +63,12 @@ void* rainbowThread(void* args) {
         // Finally we write back the couple hash:password to the output
         pthread_mutex_lock(threadArgs->outputMutex);
 
-        fprintf(threadArgs->output, "%s:%s\n", base64Password, password);
+        if (!threadArgs->minimalOutput) {
+            fprintf(threadArgs->output, "%s:", base64Password);
+        }
+        
+        fputs(password, threadArgs->output);
+        fputc('\n', threadArgs->output);
         
         threadArgs->nbOfHashWritten++;
         if (threadArgs->nbOfHashWritten >= threadArgs->step) {
@@ -80,7 +86,7 @@ void* rainbowThread(void* args) {
 }
 
 // Create dictionary file from the input and saves it to the output
-int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int nbOfThreads) {
+int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int nbOfThreads, bool minimalOutput) {
     if (!input || !output) return -1;
     if (nbOfThreads == 0) nbOfThreads = get_nprocs();
 
@@ -111,7 +117,8 @@ int createRainbow(FILE* input, FILE* output, const char* algorithm, unsigned int
         &inputMutex,
         &outputMutex,
         0,
-        10
+        10,
+        minimalOutput
     };
 
     // We start each thread and store its handle in the thread array
@@ -169,7 +176,7 @@ HashTable* loadRainbow(FILE* input) {
 }
 
 // Try to find each hash from the input in the hash table and output matches
-int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfThreads) {
+int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfThreads, bool minimalOutput) {
     if (!table || !input || !output) return -1;
     if (nbOfThreads == 0) nbOfThreads = get_nprocs(); // 0 means "All available hardware threads"
 
@@ -177,9 +184,15 @@ int solveRainbow(HashTable* table, FILE* input, FILE* output, unsigned int nbOfT
     char* data;
     while (fetchLine(input, key, BUFF_LEN) != EOF) { // For each line of the input
         strToLower(key);                             // Ensure the hash is in lowercase
-        if (getHashTable(table, key, &data)) {     // Then try to find it in the hash table
-            fprintf(output, "MATCH %s %s\n", key, data); // If found output the match
+        if (!getHashTable(table, key, &data)) continue;     // Then try to find it in the hash table
+        
+        // If found output the match
+        if (!minimalOutput) {
+            fprintf(output, "MATCH %s ", key);
         }
+        
+        if (data) fputs(data, output);
+        fputc('\n', output);
     }
 
     return 0;

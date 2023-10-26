@@ -22,6 +22,8 @@ void displayHelp() {
         "\t-i/--input:     Set the input file for the operation\n"
         "\t-t/--table:     Set the table file in L mode\n"
         "\t-a/--algorythm: Set the algorythm used for generation\n"
+        "\t-j/--jobs:      Set the number of threads to use for compute\n"
+        "\t-m/--minimal:   Reduce the output for testing purposes\n"
     );
 }
 
@@ -29,6 +31,7 @@ int main(int argc, char** argv) {
     // Program Flags
     bool gMode = false;
     bool lMode = false;
+    bool minimalOutput = false;
 
     // Optional file paths
     char* inputPath = NULL;
@@ -58,13 +61,14 @@ int main(int argc, char** argv) {
         {"table",  required_argument, 0, 't'},
         {"algorithm",  required_argument, 0, 'a'},
         {"jobs",  required_argument, 0, 'j'},
+        {"minimal",  no_argument, 0, 'm'},
         {0, 0, 0, 0}
     };
 
     char opt;
     int longopt_index;
     // Parse each command line argument and set the appropriate flags
-    while ((opt = getopt_long(argc, argv, "hGLo:i:t:a:j:", long_options, &longopt_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hGLo:i:t:a:j:m", long_options, &longopt_index)) != -1) {
         switch (opt) {
             case 'h':
                 displayHelp();
@@ -100,6 +104,9 @@ int main(int argc, char** argv) {
                     status = -1;
                 }
                 break;
+            case 'm':
+                minimalOutput = true;
+                break;
             case '?':
                 status = -1;
                 break;
@@ -125,7 +132,7 @@ int main(int argc, char** argv) {
     }
 
     // Mode G
-    if (!status && gMode) status = createRainbow(input, output, algo, nbOfThreads);
+    if (!status && gMode) status = createRainbow(input, output, algo, nbOfThreads, minimalOutput);
 
     // Mode L
     if (!status && lMode) {
@@ -140,7 +147,7 @@ int main(int argc, char** argv) {
         printf("INFO: Ready !\n");
 
         // Try to solve each input hash
-        status = solveRainbow(rainbowTable, input, output, nbOfThreads);
+        status = solveRainbow(rainbowTable, input, output, nbOfThreads, minimalOutput);
         
         // Free the previously loaded dict file
         freeHashTable(rainbowTable);

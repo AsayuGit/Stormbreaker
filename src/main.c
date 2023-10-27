@@ -115,6 +115,11 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (gMode && lMode) {
+        fprintf(stderr, "FATAL: Cannot mix L and G mode !\n");
+        status = -1;
+    }
+
     // Try to open the input file if specified
     if (!status && inputPath) {
         if (!(input = fopen(inputPath, "r"))) {
@@ -132,26 +137,40 @@ int main(int argc, char** argv) {
     }
 
     // Mode G
-    if (!status && gMode) status = createRainbow(input, output, algo, nbOfThreads, minimalOutput);
+    if (!status && gMode) {
+        status = createRainbow(input, output, algo, nbOfThreads, minimalOutput);
+    }
 
     // Mode L
     if (!status && lMode) {
-        // Load the specified dict file
-        printf("INFO: Loading dict file: %s\n", tablePath);
-        FILE* tableFile = fopen(tablePath, "r");
-        HashTable* rainbowTable = loadRainbow(tableFile);
-        if (!rainbowTable) {
-            fprintf(stderr, "FATAL: Cannot load dict file %s\n", tablePath);
-            return -1;
-        }
-        printf("INFO: Ready !\n");
+        // If no table is provided
+        if (!tablePath) {
+            // Print an error and exit
+            fprintf(stderr, "FATAL: No table file provided !\n");
+            status = -1;
+        } else {
+            // Load the specified table file
+            printf("INFO: Loading file: %s\n", tablePath);
+            FILE* tableFile = fopen(tablePath, "r");
+            
+            // Try loading the hashtable from the provided file
+            HashTable* rainbowTable = loadRainbow(tableFile);
+            if (!rainbowTable) {
+                // If we're unsuccessful then we print the corresponding error and exit
+                fprintf(stderr, "FATAL: Cannot load file %s\n", tablePath);
+                status = -1;
+            } else {
+                // We're now ready to solve the hashlist
+                printf("INFO: Ready !\n");
 
-        // Try to solve each input hash
-        status = solveRainbow(rainbowTable, input, output, nbOfThreads, minimalOutput);
-        
-        // Free the previously loaded dict file
-        freeHashTable(rainbowTable);
-        fclose(tableFile);
+                // Try to solve each input hash
+                status = solveRainbow(rainbowTable, input, output, nbOfThreads, minimalOutput);
+                
+                // Free the previously loaded dict file
+                freeHashTable(rainbowTable);
+                fclose(tableFile);
+            }
+        }
     }
 
     // Close open files if any

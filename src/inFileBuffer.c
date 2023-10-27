@@ -52,6 +52,17 @@ InFileBuffer* openInFileBuffer(FILE* file, size_t size) {
     return newBufferedFile;
 }
 
+// Wraps a mutex lock around (readLineInFileBuffer)
+int safeReadLineInFileBuffer(InFileBuffer* fileBuffer, char* buffer, size_t buffLen, pthread_mutex_t* mutex) {
+    int status;
+    
+    pthread_mutex_lock(mutex); // Locks and unlock the mutex before attempting to access the shared ressource
+    status = readLineInFileBuffer(fileBuffer, buffer, buffLen);
+    pthread_mutex_unlock(mutex);
+
+    return status;
+}
+
 // Read some data from the buffer and fetches more if necessary
 size_t readInFileBuffer(InFileBuffer* fileBuffer, char* data, size_t size) {
     // If the data to read is bigger than the remaining data in the buffer

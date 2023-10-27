@@ -4,12 +4,13 @@ LD = gcc
 PROJ := stormbreaker
 
 SRC := src/main.c \
-	src/stringTools.c \
-	src/rainbow.c \
 	src/hashTable.c \
 	src/linkedList.c \
 	src/outFileBuffer.c \
-	src/inFileBuffer.c
+	src/inFileBuffer.c \
+	src/rainbowCreate.c \
+	src/rainbowLoad.c \
+	src/rainbowSolve.c \
 
 CFLAGS := -O2 -Wall
 LIBS := -lcrypto -lpthread

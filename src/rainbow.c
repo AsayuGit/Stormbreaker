@@ -77,12 +77,13 @@ void* rainbowThread(void* args) {
         // Finally we write back the couple hash:password to the output
         pthread_mutex_lock(threadArgs->outputMutex);
 
+        writeOutFileBuffer(threadArgs->output, base64Hash, strlen(base64Hash));
+
         if (!threadArgs->minimalOutput) {
-            writeOutFileBuffer(threadArgs->output, base64Hash, strlen(base64Hash));
             writeOutFileBuffer(threadArgs->output, ":", 1);
+            writeOutFileBuffer(threadArgs->output, password, strlen(password));
         }
         
-        writeOutFileBuffer(threadArgs->output, password, strlen(password));
         writeOutFileBuffer(threadArgs->output, "\n", 1);
         
         // We periodically keep track of the number of hash written

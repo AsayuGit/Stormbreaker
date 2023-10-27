@@ -9,6 +9,8 @@ RUN apt install libssl-dev -y
 # Copy the program sources and moved into the build directory
 COPY src /build/src
 COPY Makefile /build/Makefile
+COPY diag.sh /usr/local/bin/diag.sh
+RUN chmod a+x /usr/local/bin/diag.sh
 WORKDIR /build
 
 # Build the app

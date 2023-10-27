@@ -22,9 +22,6 @@ build:
 clean:
 	rm -rf $(PROJ)
 
-run:
-	@./$(PROJ)
-
 docker-build:
 	docker build -t $(PROJ):latest .
 

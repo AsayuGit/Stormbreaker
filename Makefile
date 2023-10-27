@@ -11,13 +11,12 @@ SRC := src/main.c \
 	src/outFileBuffer.c \
 	src/inFileBuffer.c
 
-INCLUDE := -Iinclude
-
 CFLAGS := -O2 -Wall
 LIBS := -lcrypto -lpthread
 
 build:
-	$(CC) -o $(PROJ) $(CFLAGS) $(SRC) $(INCLUDE) $(LIBS)
+	$(CC) -o $(PROJ) $(CFLAGS) $(SRC) $(LIBS)
+	chmod a+x $(PROJ)
 
 clean:
 	rm -rf $(PROJ)

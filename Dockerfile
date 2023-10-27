@@ -1,6 +1,6 @@
 # Use the GCC image to have make and gcc by default
 FROM gcc:bookworm
-LABEL org.opencontainers.image.authors="Killian RAIMBAUD <killian.rai@gmail.com"
+LABEL org.opencontainers.image.authors="Killian RAIMBAUD <killian.rai@gmail.com>"
 
 # Install the missing dependencies (libssl3 & libssl-dev)
 RUN apt update
@@ -8,7 +8,6 @@ RUN apt install libssl-dev -y
 
 # Copy the program sources and moved into the build directory
 COPY src /build/src
-COPY include /build/include
 COPY Makefile /build/Makefile
 WORKDIR /build
 
